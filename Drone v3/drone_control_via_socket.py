@@ -1,21 +1,22 @@
 import socket
 import time
 
-# Assign ip and port to client and host
+# Assign ip and port to client and server
+# Client
 tello_ip = '192.168.10.1'
 tello_port = 8889
 
-# '', 8889
+# Server
 local_ip = ''
 local_port = 8889
 
-# Initialize socket and bind it to host
+# Initialize socket and bind it to the server's ip and port.
 socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 socket.bind((local_ip, local_port))
 
 tello_address = (tello_ip, tello_port)
 
-# Initialize Tello SDK
+# Initialize the Tello drone.
 socket.sendto(b'command', tello_address)
 print('sent: command')
 
@@ -31,6 +32,6 @@ time.sleep(5)
 socket.sendto(b'land', tello_address)
 print('sent: landing')
 
-# Close socket connection to prevent the host from listing indefinitely.
+# Close socket connection to prevent the server from listing for the client indefinitely.
 socket.close
 print('Closed connection!')
