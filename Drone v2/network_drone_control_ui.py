@@ -23,16 +23,17 @@ while True:
         try:
             print('Flyver nu!')
             drone.is_flying = True
-            drone.send_control_command("takeoff", timeout=0)
+            # Moves a minimum of 20cm, when using directions.
+            drone.move('up', 20)
             time.sleep(1)
         except:
-            print('Fejl ved takoff')
+            print('Fejl ved fly op')
 
     # When button land is pressed -> drone land
     if event == '-button.land-':
         try:
             print('Lander nu!')
-            drone.send_control_command("land")
+            drone.send_control_command("land", 0)
             drone.is_flying = False
             time.sleep(1)
         except:
