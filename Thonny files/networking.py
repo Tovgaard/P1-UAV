@@ -4,7 +4,7 @@ import socket, network, time, binascii
 ssid_tello = 'TELLO-gruppe-153'
 password_tello = 'pass=trold32'
 
-# ssid and password for raspberrypi Pico W access point.
+# ssid and password for raspberry pi Pico W access point.
 ssid_pico = "PicoW"
 password_pico = "123456789"
 
