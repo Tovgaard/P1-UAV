@@ -22,7 +22,8 @@ latitude = ""
 longitude = ""
 satellites = ""
 gpsTime = ""
-latlong_list = []
+lat_list = []
+long_list = []
 
 #function to get gps Coordinates
 def getPositionData(gps_module):
@@ -90,28 +91,22 @@ while True:
     #if gps data is found then print it on lcd
     if(FIX_STATUS == True):
         print("fix......")
-        print(latitude)
-        print(longitude)
         
-        latlong = [float(latitude), float(longitude)]
-        
-        latlong_list.append(latlong)
-        
-        if len(latlong_list) >= 10:
-            
-            avglatlong_list = [(latlong_list[0][0]+latlong_list[1][0]+latlong_list[2][0]+latlong_list[3][0]+latlong_list[4][0]+latlong_list[5][0]+latlong_list[6][0]+latlong_list[7][0]+latlong_list[8][0]+latlong_list[9][0])/10, (latlong_list[0][1]+latlong_list[1][1]+latlong_list[2][1]+latlong_list[3][1]+latlong_list[4][1]+latlong_list[5][1]+latlong_list[6][1]+latlong_list[7][1]+latlong_list[8][1]+latlong_list[9][1])/10]
-            
-            print(f'avg Coords = {avglatlong_list}')
-            
-            x1 = ((6.3781*10**6)*avglatlong_list[1]*math.cos(avglatlong_list[0]))
-            y1 = ((6.3781*10**6)*avglatlong_list[0])
+        lat = [float(latitude)]
+        long = [float(longitude)]
 
-            dist = math.sqrt(((x1-x1)**2)+((y1-y1)**2))
+        lat_list.append(lat)
+        long_list.append(long)
 
-            print(f'dist = {dist}')
-        
+        if len(lat_list) >= 15:
+            
+            avg_lat = sum(lat_list)/len(lat_list)
+            avg_long = sum(long_list)/len(long_list)
+
+            avg_coords = [avg_lat, avg_long]
+            print(f'The average current pos coords = ({avg_coords})')
+
         FIX_STATUS = False
         
     if(TIMEOUT == True):
-        print("Request Timeout: No GPS data is found.")
         TIMEOUT = False
