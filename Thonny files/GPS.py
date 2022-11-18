@@ -24,6 +24,10 @@ satellites = ""
 gpsTime = ""
 lat_list = []
 long_list = []
+UTM_list = []
+
+trilateration_coords = []
+
 
 #function to get gps Coordinates
 def getPositionData(gps_module):
@@ -51,7 +55,6 @@ def getPositionData(gps_module):
                 #print("E/W         : " + parts[5])
                 #print("Position Fix: " + parts[6])
                 #print("n sat       : " + parts[7])
-                print(parts)
                 
                 latitude = convertToDigree(parts[2])
                 # parts[3] contain 'N' or 'S'
@@ -70,7 +73,7 @@ def getPositionData(gps_module):
             TIMEOUT = True
             break
         utime.sleep_ms(500)
-        
+
 #function to convert raw Latitude and Longitude
 #to actual Latitude and Longitude
 def convertToDigree(RawDegrees):
@@ -82,7 +85,55 @@ def convertToDigree(RawDegrees):
     Converted = float(firstdigits + nexttwodigits/60.0)
     Converted = '{0:.6f}'.format(Converted) # to 6 decimal places
     return str(Converted)
-    
+
+def UTM_conversion(latitude, longitude):
+    # Conversion from degrees to radians
+    rad_lat = latitude * (math.pi/180)
+    rad_long = longitude * (math.pi/180)
+
+    # Our UTM zone (32N)
+    rad_long0 = 9*(math.pi/180)
+
+    # Earth's equatorial radius in meters (consant)
+    eq_r = 6378137
+
+    # Earth's polar radius in meters (constant)
+    pol_r = 6356752.3142
+
+    # Scaling factor
+    k0 = 0.9996
+
+    # Different formulas to split up the final calculation
+    em = math.sqrt(1-(pol_r**2/eq_r**2))
+
+    en = (em*eq_r/pol_r)**2
+
+    n = (eq_r-pol_r)/(eq_r+pol_r)
+
+    rho = eq_r*(1-em**2)/(1-em**2*math.sin(rad_lat)**2)**(3/2)
+
+    nu = eq_r/(1-em**2*math.sin(rad_lat)**2)**(1/2)
+
+    p = (rad_long-rad_long0)
+
+    # Calculation of the meridonial arc s:
+    s = eq_r*((1-(em**2/4)-(3*em**4/64)-(5*em**6/256))*rad_lat-
+        ((3*em**2/8)+(3*em**4/32)+(45*em**6/1024))*math.sin(2*rad_lat)+
+        ((15*em**4/256)+(45*em**6/1024))*math.sin(4*rad_lat)-
+        (35*em**6/3072)*math.sin(6*rad_lat))
+
+    # Calculation of UTM coordinates:
+    k1 = s*k0
+    k2 = k0*nu*math.sin(rad_lat)*math.cos(rad_lat)/2
+    k3 = (k0*nu*math.sin(rad_lat)*math.cos(rad_lat)**3/24)*(5-math.tan(rad_lat)**2+9*en*math.cos(rad_lat)**2+4*en**2*math.cos(rad_lat)**4)
+
+    k4 = k0*nu*math.cos(rad_lat)
+    k5 = (k0*nu*math.cos(rad_lat)**3/6)*(1-math.tan(rad_lat)**2+en*math.cos(rad_lat)**2)
+
+    UTM_easting = k4*p+k5*p**3+500000
+    UTM_northing = k1+k2*p**2+k3*p**4
+
+    return [UTM_easting, UTM_northing]
     
 while True:
     
@@ -90,23 +141,37 @@ while True:
 
     #if gps data is found then print it on lcd
     if(FIX_STATUS == True):
-        print("fix......")
+        print("fix, grapping coords")
         
-        lat = [float(latitude)]
-        long = [float(longitude)]
+        lat = float(latitude)
+        long = float(longitude)
 
         lat_list.append(lat)
         long_list.append(long)
+        print(len(lat_list))
 
         if len(lat_list) >= 15:
             
             avg_lat = sum(lat_list)/len(lat_list)
             avg_long = sum(long_list)/len(long_list)
 
-            avg_coords = [avg_lat, avg_long]
-            print(f'The average current pos coords = ({avg_coords})')
+            trilateration_coords.append([avg_lat, avg_long])
+            print(trilateration_coords)
+            long_list = []
+            lat_list = []
+            utime.sleep_ms(20000)
+            print('Starting new batch of GPS coords')
+
+
+        if len(trilateration_coords) == 2:
+            print(trilateration_coords)
+            UTM_list.append(UTM_conversion(trilateration_coords[0][0], trilateration_coords[0][1]))
+            UTM_list.append(UTM_conversion(trilateration_coords[1][0], trilateration_coords[1][1]))
+            print(UTM_list)
+            break
 
         FIX_STATUS = False
         
     if(TIMEOUT == True):
         TIMEOUT = False
+        print('Timeout')
