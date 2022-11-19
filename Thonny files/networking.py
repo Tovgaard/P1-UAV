@@ -9,15 +9,15 @@ ssid_pico = "PicoW"
 password_pico = "123456789"
 
 # Connect to drone access point via wlan.
-def wlan_connect():
+def drone_wlan_connect():
     global wlan
     wlan = network.WLAN(network.STA_IF)
     wlan.active(True)
     wlan.connect(ssid_tello, password_tello)
     
-    while wlan.isconnected() == False:
-            print('wlan is not connected!')
-            return
+    if wlan.isconnected() == False:
+        print('wlan is not connected!')
+        return
         
     ip = wlan.ifconfig()[0]
     print(f'Connected on {ip}')
@@ -27,11 +27,12 @@ def wlan_disconnect():
     if wlan.isconnected() == True:
         wlan.disconnect
         if wlan.isconnected() == True:
+            wlan.active(False)
             print('wlan disconnected!')
         else:
             print('wlan did not disconnect!')
     else:
-        print('wlan not active')
+        print('wlan is not active')
 
 # Create tello drone socket and bind Raspberrypi Pico W connection to it.
 def drone_socket_bind():
@@ -90,13 +91,14 @@ def network_scan():
     for w in networks:
         i+=1
         print(i,w[0].decode(),binascii.hexlify(w[1]).decode(),w[2],w[3],w[4],w[5])
+    wlan.active(False)
 
 
 network_scan()
 
 # program:
 pico_access_point_create()
-wlan_connect()
+drone_wlan_connect()
 drone_socket_bind()
 
 
