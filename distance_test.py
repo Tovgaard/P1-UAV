@@ -3,7 +3,7 @@ from math import log10
 import network, time
 
 
-def network_scan(scan_amount = 60, wifi_name = 'Sim iPhone', time_between_network_scans = 0.5):
+def network_scan(scan_amount = 60, wifi_name = 'LenovoFalk', time_between_network_scans = 0.1):
     channel_received = False
     wifi_avg_list = []
     channel = []
@@ -17,6 +17,7 @@ def network_scan(scan_amount = 60, wifi_name = 'Sim iPhone', time_between_networ
             if w[0].decode() == wifi_name:
                 channel.append(w[2])
                 channel_received = True
+                print(f'Access point {wifi_name} found!')
 
     while True:
         networks = wlan.scan()
@@ -33,13 +34,11 @@ def network_scan(scan_amount = 60, wifi_name = 'Sim iPhone', time_between_networ
             return [channel, avg_dBm, wifi_avg_list, wifi_name]
 
 def cal_distance(wifi_info):
-    environmental_constant = 24.33
-
     if wifi_info[1] != None:
-        wifi_frequency = 2400+5*wifi_info[0][0]
-        FSPL = 27.55
+        wifi_frequency = 2412+5*(wifi_info[0][0]-1)
+        FSPL = 27.55 #27.55
 
-        m = 10 ** (( FSPL - (environmental_constant * log10(wifi_frequency)) + abs(wifi_info[1]) ) / 20 )
+        m = 10 ** (( FSPL - (20 * log10(wifi_frequency)) + abs(wifi_info[1]) ) / 20 )
         m=round(m,2)
         
         # Debug
@@ -49,6 +48,6 @@ def cal_distance(wifi_info):
 
         return m
 
-(cal_distance(network_scan(scan_amount = 5000, wifi_name = 'Sim iPhone')))
+(cal_distance(network_scan(scan_amount = 30, wifi_name = 'LenovoFalk')))
 
 
