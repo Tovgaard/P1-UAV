@@ -47,4 +47,3 @@ pico_data_send([12, 32, -65])
 
 #pico_access_point_end()
 
-#192.168.4.16
