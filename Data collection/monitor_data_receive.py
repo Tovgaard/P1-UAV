@@ -6,7 +6,7 @@ import socket, time
 
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  
 
-host = '192.168.4.1'    # ip of raspberry pi 
+host = '192.168.4.1'    # ip of raspberry pi pico W
 port = 12345
 
 client_socket.connect((host, port))

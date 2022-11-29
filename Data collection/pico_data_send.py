@@ -40,7 +40,7 @@ def pico_data_send(access_point):
                 # [Lat, Long, RSSI]
                 data = [random.randint(1, 25), random.randint(1, 25), random.randint(1, 25)]
 
-                # Encode data
+                # Encode the data
                 data_str = str(data)
                 encoded_data = data_str.encode()
 
