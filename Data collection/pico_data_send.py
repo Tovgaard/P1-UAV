@@ -1,28 +1,25 @@
 # Micropython, runs on the raspberry pi Pico W
 import network, socket, random, time
 
-# ssid and password for raspberry pi Pico W access point.
-ssid_pico = "PicoW"
-password_pico = "123456789"
+def pico_access_point_create(ssid_pico="PicoW", password_pico="123456789"):
 
-def pico_access_point_create(ssid_pico, password_pico):
-    global pico_access_point
     pico_access_point = network.WLAN(network.AP_IF)
     pico_access_point.config(ssid=ssid_pico, password=password_pico) 
     pico_access_point.active(True)
 
     while pico_access_point.active == False:
-        print('ja')
+        None
 
     print("Access point active")
     print(pico_access_point.ifconfig())
 
+    return pico_access_point
 
-def pico_access_point_end():
-    pico_access_point.active(False)
+def pico_access_point_end(access_point):
+    access_point.active(False)
     print('Access point closed!')
 
-def pico_data_send(data):
+def pico_data_send(access_point):
     # Server socket: Pico W
     server_socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
     
@@ -32,26 +29,38 @@ def pico_data_send(data):
     server_socket.bind((host, port))
     server_socket.listen(1)
 
-    data_packet = str(data)
-    data_packet = data_packet.encode()
+    while True:
 
-    try:
-        client, addr = server_socket.accept()
-        print(f'Client: {client}, Address: {addr}')
-        client.sendall(data_packet)
-        client.close()
-    except KeyboardInterrupt:
-        pico_access_point_end()
-    except OSError:
-        pico_access_point_end()
-            
-pico_access_point_create(ssid_pico, password_pico)
+        client, address = server_socket.accept()
 
-while True:
-    s = random.randint(1, 25)
-    try:
-        pico_data_send(s)
-        print(f'Data send! {s}')
-        #print(pico_access_point.scan())
-    except OSError as e:
-        None
+        try:
+            while True:
+                return_data = client.recv(64)
+                
+                # [Lat, Long, RSSI]
+                data = [random.randint(1, 25), random.randint(1, 25), random.randint(1, 25)]
+
+                # Encode data
+                data_str = str(data)
+                encoded_data = data_str.encode()
+
+                print(f'Client: {client}, Address: {address}, Data: {encoded_data}.')
+
+                if not return_data:
+                    break
+
+                client.sendall(encoded_data) 
+
+        except KeyboardInterrupt as a:
+            print(a)
+            pico_access_point_end(access_point)
+            client.close()
+        except OSError as a:
+            print(a)
+            pico_access_point_end(access_point)
+            client.close()
+
+hotspot = pico_access_point_create()
+pico_data_send(hotspot)
+
+#pico_access_point_end()
