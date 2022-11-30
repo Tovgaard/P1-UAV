@@ -19,6 +19,6 @@ c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
 
 dist = radius * c * 1000
 
-print(f'The distance between the 2 geographic coordinates is: {dist}m')
+print(f'The distance between the 2 geographic coordinates is: {dist}m john')
 
 
