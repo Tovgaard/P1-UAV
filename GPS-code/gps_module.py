@@ -7,7 +7,7 @@ Module for getting and converting coordinates from the Ublox GPS module.
 """
 
 # GPS Module UART Connection.
-# gps = UART(1, baudrate=9600, tx=Pin(4), rx=Pin(5))
+gps = UART(1, baudrate=9600, tx=Pin(4), rx=Pin(5))
 
 def get_coordinates(gps_module):
     """
@@ -35,11 +35,10 @@ def get_coordinates(gps_module):
 
         # Split the message using ','.
         NMEA_sentence = NMEA_array.split(',')
-
+        print(NMEA_sentence)
         # Check if it is the right NMEA sentence (the one with coordinates).
         if NMEA_sentence[0] is "b'$GPGGA":
-            if (NMEA_sentence[3] is 'N' or 'S') and (NMEA_sentence[5] is 'E' or 'W'):
-
+            if (NMEA_sentence[3] is ('N' or 'S')) and (NMEA_sentence[5] is ('E' or 'W')):
                 latitude = decimal_degree_converter(NMEA_sentence[2], NMEA_sentence[3])
                 longitude = decimal_degree_converter(NMEA_sentence[4], NMEA_sentence[5])
 
@@ -79,4 +78,6 @@ def decimal_degree_converter(geographic_coordinate, geographic_indicator):
         conversion = degrees - seconds/60
         return conversion
 
-# Source (decimal conversion): https://forums.raspberrypi.com/viewtopic.php?t=175163
+# print(get_coordinates(gps))
+
+# Source (decimal conversion): https://forums.raspberrypi.com/viewtopic.php?t=175163o
