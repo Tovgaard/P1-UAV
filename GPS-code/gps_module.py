@@ -7,7 +7,7 @@ Module for getting and converting coordinates from the Ublox GPS module.
 """
 
 # GPS Module UART Connection.
-gps = UART(1, baudrate=9600, tx=Pin(4), rx=Pin(5))
+# gps = UART(1, baudrate=9600, tx=Pin(4), rx=Pin(5))
 
 def get_coordinates(gps_module):
     """
