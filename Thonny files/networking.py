@@ -1,5 +1,5 @@
 import socket, network, time, binascii
-
+global drone_socket
 # ssid and password for the drone's access point.
 ssid_tello = 'TELLO-gruppe-153'
 password_tello = 'pass=trold32'
@@ -36,7 +36,7 @@ def wlan_disconnect():
 
 # Create tello drone socket and bind Raspberrypi Pico W connection to it.
 def drone_socket_bind():
-    global socket
+    global drone_socket
     # Assign ip and port to client and server
     # Client
     tello_ip = '192.168.10.1'
@@ -47,21 +47,46 @@ def drone_socket_bind():
     local_port = 8889
 
     # Initialize socket and bind it to the server's ip and port.
-    socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    socket.bind((local_ip, local_port))
+    drone_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    drone_socket.bind((local_ip, local_port))
 
     tello_address = (tello_ip, tello_port)
 
     # Initialize the Tello drone, by sending "command".
     try:
-        socket.sendto(b'command', tello_address)
+        drone_socket.sendto(b'command', tello_address)
         print('sent: command')
     except:
         print('Drone is not connected!')
 
+    
+
+    while True:
+        # Send command 'land' to Tello drone
+        try:
+            drone_socket.sendto(b'land', tello_address)
+            print('sent: landing')
+            break
+        except Exception as o:
+            print(o)
+
+
 def drone_socket_close():
-    socket.close
+    global drone_socket
+    drone_socket.close()
     print('Socket closed!')
+
+def drone_socket_send_command(command, time_s):
+
+    tello_ip = '192.168.10.1'
+    tello_port = 8889
+    tello_address = (tello_ip, tello_port)
+
+    command = bytes(command, 'utf-8')
+
+    drone_socket.sendto(command, tello_address)
+    print(f'sent: {command}')
+    time.sleep(time_s)
 
 # Create an access point on Raspberry Pico W, for a computer to connect to.
 def pico_access_point_create():
@@ -94,19 +119,13 @@ def network_scan():
     wlan.active(False)
 
 
-network_scan()
-
 # program:
-pico_access_point_create()
 drone_wlan_connect()
 drone_socket_bind()
 
+drone_socket_send_command('takeoff', 10)
+drone_socket_send_command('land', 5)
 
 # End connections
 wlan_disconnect()
 drone_socket_close()
-pico_access_point_end()
-
-
-
-
