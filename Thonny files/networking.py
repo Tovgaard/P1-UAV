@@ -106,17 +106,36 @@ def pico_access_point_end():
     time.sleep(1)
     print('Access point closed!')
 
-def network_scan():
-    wlan = network.WLAN() #  network.WLAN(network.STA_IF)
-    wlan.active(True)
-    networks = wlan.scan() # list with tupples with 6 fields ssid, bssid, channel, RSSI, security, hidden
-    i=0
 
-    networks.sort(key=lambda x:x[3],reverse=True) # sorted on RSSI (3)
-    for w in networks:
-        i+=1
-        print(i,w[0].decode(),binascii.hexlify(w[1]).decode(),w[2],w[3],w[4],w[5])
-    wlan.active(False)
+def network_scan(scan_amount = 60, wifi_name = 'OnePlus 9 Pro', time_between_network_scans = 0.1):
+    channel_received = False
+    wifi_avg_list = []
+    channel = []
+
+    wlan = network.WLAN()
+    wlan.active(True)
+
+    while channel_received == False:
+        networks = wlan.scan()
+        for w in networks:
+            if w[0].decode() == wifi_name:
+                channel.append(w[2])
+                channel_received = True
+                print(f'Access point {wifi_name} found!')
+
+    while True:
+        networks = wlan.scan()
+
+        for w in networks:
+            if w[0].decode() == wifi_name:
+                wifi_avg_list.append(w[3])
+                channel.append(w[2])
+        
+        time.sleep(time_between_network_scans)
+
+        if len(wifi_avg_list) >= scan_amount: 
+            avg_dBm = sum(wifi_avg_list)/len(wifi_avg_list)
+            return [channel, avg_dBm, wifi_avg_list, wifi_name]
 
 
 # program:
@@ -124,6 +143,8 @@ drone_wlan_connect()
 drone_socket_bind()
 
 drone_socket_send_command('takeoff', 10)
+drone_socket_send_command('forward 40', 8)
+drone_socket_send_command('back 40', 8)
 drone_socket_send_command('land', 5)
 
 # End connections
