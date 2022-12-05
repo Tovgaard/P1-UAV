@@ -1,0 +1,134 @@
+import PySimpleGUI as sg
+import numpy as np
+import matplotlib
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+matplotlib.use("TkAgg")
+
+
+def draw_figure(canvas, figure):
+    """
+    Draws figure on canvas for GUI
+    """
+    
+    figure_canvas_agg = FigureCanvasTkAgg(figure, canvas)
+    figure_canvas_agg.draw()
+    figure_canvas_agg.get_tk_widget().pack(side="top", fill="both", expand=1)
+    return figure_canvas_agg
+
+def delete_fig(fig):
+    """
+    Deletes figure from plot
+    """
+    fig.get_tk_widget().forget()
+    plt.close('all')
+    
+    
+def make_fig(x,y):
+    """
+    Makes figure with plot
+    """
+    
+    def f(x, y):
+        return np.sin(np.sqrt(x ** 2 + y ** 2))
+
+    x = np.linspace(-6, 6, 30)
+    y = np.linspace(-6, 6, 30)
+
+    X, Y = np.meshgrid(x, y)
+    Z = f(X, Y)
+    fig = plt.figure()
+    ax = plt.axes(projection='3d')
+    ax.contour3D(X, Y, Z, 50, cmap='binary')
+    ax.set_xlabel('x')
+    ax.set_ylabel('y')
+    ax.set_zlabel('z')
+    
+    return fig
+    
+    
+
+layout = [[sg.Text('')],
+          [sg.Button('Connection status',key = "status"), sg.Checkbox("",default=False)],
+          [sg.Button('Emergency landing',key = "emergency_landing")],
+          [sg.Button('Coordinates of jammer', key = "location"),sg.Output(s=(20,1))],
+           [sg.Button('Show jammer', key = "button")],
+           [sg.Canvas(key = '-graph-')]]
+
+
+window = sg.Window('Location of jammer',
+                    layout = layout,
+                    finalize = True,
+                    element_justification='left')
+
+fig_gui = None
+
+while True:
+    event, values = window.read()
+    
+    print(event,values)
+    
+    if event == 'button':
+        if fig_gui != None:
+            delete_fig(fig_gui)
+        
+        x = np.linspace(-6, 6, 30)
+        y = np.linspace(-6, 6, 30)
+        
+        
+        fig = make_fig(x,y)
+        fig_gui = draw_figure(window['-graph-'].TKCanvas, fig)
+    
+    if event == sg.WIN_CLOSED:
+        break
+
+plt.close('all')
+window.close()
+
+
+#heatmap agtig plot
+"""
+def f(x, y):
+    return np.sin(np.sqrt(x ** 2 + y ** 2))
+
+theta = 2 * np.pi * np.random.random(1000)
+r = 6 * np.random.random(1000)
+x = np.ravel(r * np.sin(theta))
+y = np.ravel(r * np.cos(theta))
+z = f(x, y)
+fig = plt.figure()
+ax = plt.axes(projection='3d')
+ax.scatter(x, y, z, c=z, cmap='viridis', linewidth=0.5);
+"""
+
+
+#scatter plot
+"""
+np.random.seed(19680801)
+
+
+def randrange(n, vmin, vmax):
+    return (vmax - vmin)*np.random.rand(n) + vmin
+
+fig = plt.figure()
+ax = fig.add_subplot(projection='3d')
+
+n = 100
+
+# For each set of style and range settings, plot n random points in the box
+# defined by x in [23, 32], y in [0, 100], z in [zlow, zhigh].
+for m, zlow, zhigh in [('o', -50, -25), ('^', -30, -5)]:
+    xs = randrange(n, 23, 32)
+    ys = randrange(n, 0, 100)
+    zs = randrange(n, zlow, zhigh)
+    ax.scatter(xs, ys, zs, marker=m)
+
+ax.set_xlabel('X Label')
+ax.set_ylabel('Y Label')
+ax.set_zlabel('Z Label')
+"""
+
+
+
+
+
