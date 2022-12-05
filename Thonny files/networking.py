@@ -141,7 +141,7 @@ drone_socket_bind()
 drone_socket_send_command('takeoff', 6)
 drone_socket_send_command('land', 5)
 
-# Commands: https://dl-cdn.ryzerobotics.com/downloads/Tello/Tello%20SDK%202.0%20User%20Guide.pdf
+# SDK commands: https://dl-cdn.ryzerobotics.com/downloads/Tello/Tello%20SDK%202.0%20User%20Guide.pdf
 
 # End connections
 wlan_disconnect()

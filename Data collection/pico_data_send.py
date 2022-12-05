@@ -47,7 +47,7 @@ def pico_data_send(access_point):
 
                 return_data = client.recv(64)
 
-                # if recv data is b'exit', close the server and end the program.
+                # if recv data is b'exit', close the server and end the program
                 if str(return_data) is "b'exit'":
                     print('Exit received, closing server!')
                     pico_access_point_end(hotspot)
