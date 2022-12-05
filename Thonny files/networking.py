@@ -24,15 +24,14 @@ def drone_wlan_connect():
 
 # Disconnect drone from drone hotspot.
 def wlan_disconnect():
+    global wlan
     if wlan.isconnected() == True:
-        wlan.disconnect
-        if wlan.isconnected() == True:
-            wlan.active(False)
-            print('wlan disconnected!')
-        else:
-            print('wlan did not disconnect!')
+        wlan.active(False)
+        wlan.disconnect()
+        print('wlan disconnected!')
     else:
-        print('wlan is not active')
+        print('wlan did not disconnect!')
+
 
 # Create tello drone socket and bind Raspberrypi Pico W connection to it.
 def drone_socket_bind():
@@ -53,22 +52,13 @@ def drone_socket_bind():
     tello_address = (tello_ip, tello_port)
 
     # Initialize the Tello drone, by sending "command".
-    try:
-        drone_socket.sendto(b'command', tello_address)
-        print('sent: command')
-    except:
-        print('Drone is not connected!')
-
-    
-
     while True:
-        # Send command 'land' to Tello drone
         try:
-            drone_socket.sendto(b'land', tello_address)
-            print('sent: landing')
+            drone_socket.sendto(b'command', tello_address)
+            print('sent: command')
             break
-        except Exception as o:
-            print(o)
+        except Exception as error:
+            print(f'Drone is not connected! ({error})')
 
 
 def drone_socket_close():
@@ -83,10 +73,11 @@ def drone_socket_send_command(command, time_s):
     tello_address = (tello_ip, tello_port)
 
     command = bytes(command, 'utf-8')
-
+    
     drone_socket.sendto(command, tello_address)
     print(f'sent: {command}')
     time.sleep(time_s)
+        
 
 # Create an access point on Raspberry Pico W, for a computer to connect to.
 def pico_access_point_create():
@@ -139,13 +130,18 @@ def network_scan(scan_amount = 60, wifi_name = 'OnePlus 9 Pro', time_between_net
 
 
 # program:
+try:
+    wlan_disconnect()
+except Exception as e:
+    print(f'wlan did not disconnect! ({e})')
+
 drone_wlan_connect()
 drone_socket_bind()
 
-drone_socket_send_command('takeoff', 10)
-drone_socket_send_command('forward 40', 8)
-drone_socket_send_command('back 40', 8)
+drone_socket_send_command('takeoff', 6)
 drone_socket_send_command('land', 5)
+
+# Commands: https://dl-cdn.ryzerobotics.com/downloads/Tello/Tello%20SDK%202.0%20User%20Guide.pdf
 
 # End connections
 wlan_disconnect()

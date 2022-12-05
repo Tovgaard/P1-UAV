@@ -13,8 +13,16 @@ client_socket.connect((host, port))
 
 length = 0
 
+close_server = False
+
 while True:
-    client_socket.sendall(b'Ready for data!')
+
+    if close_server is True:
+        client_socket.sendall(b'exit')
+        print('Send closing message to server!')
+        break
+
+    client_socket.sendall(b'Send data!')
     received_data_packet = client_socket.recv(64)
     decoded_data = received_data_packet.decode('utf-8')
 
@@ -27,8 +35,9 @@ while True:
         print(a)
       
     if length >= 5:
+        client_socket.sendall(b'exit') # Close the server on the pico, after we're done.
         client_socket.close()
         break
 
-    time.sleep(1.5)
+    time.sleep(1)
 
