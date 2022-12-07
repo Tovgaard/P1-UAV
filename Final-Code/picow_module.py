@@ -113,7 +113,7 @@ def pico_data_send(access_point):
                 pico_access_point_end(access_point)
                 client.close()
                 return
-
+            
             # Create a UART connection between the Pico W and the GPS module, using the rx Pin GP5, 
             # (pin 7 in the datasheet a.k.a. UART1_RX, as it is receiving), on the Pico W 
             # and pin 4 (TX, as it is transmitting) on the Neo-6m GPS module.
@@ -124,13 +124,15 @@ def pico_data_send(access_point):
 
             # Collect the GPS coordinates, using the module these have already been converted from NMEA to geographic coordinates.
             coordinates = gps.get_coordinates(GPS)
+            
+            RSSI = scan_data
 
             # Make a list of the data consisting of [Latitude, Longitude, RSSI].
             data_list = [coordinates[0], coordinates[1], RSSI]
 
             # Convert the data_list into a string and encode it so the server can send the reply in binary.
             data_str = str(data_list)
-            encoded_data = data_str.encode(encoding='utf-8')
+            encoded_data = data_str.encode()
 
             # Console DEBUG
             # print(f'Client: {client}, Address: {address}, Data: {encoded_data}.')
@@ -186,4 +188,3 @@ def pico_network_scan(wifi_ssid, scan_amount = 10, time_between_scans = 0.1):
         if len(RSSI_list) >= scan_amount: 
             avg_RSSI = sum(RSSI_list)/len(RSSI_list)
             return [avg_RSSI, RSSI_list, wifi_ssid]
-
