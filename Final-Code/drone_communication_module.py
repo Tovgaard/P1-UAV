@@ -16,7 +16,7 @@ def drone_wlan_connect(ssid_drone='TELLO-gruppe-153', password_drone='pass=trold
 
     pico_wlan       ; Var as network.WLAN(network.STA_IF), the wlan connection to the drone's access point.
     """
-    # Connect to the drone's access point using wlan and STA_IF (station / client).
+    # Connect to the drone's access point using the wlan STA_IF (station / client) interface.
     pico_wlan = network.WLAN(network.STA_IF)
     pico_wlan.active(True)
     pico_wlan.connect(ssid_drone, password_drone)

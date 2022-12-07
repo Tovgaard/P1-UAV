@@ -147,33 +147,43 @@ def pico_data_send(access_point):
                 client.sendall(encoded_data)
 
 
-def pico_network_scan(scan_amount = 10, wifi_name = 'OnePlus 9 Pro', time_between_network_scans = 0.1):
-    channel_received = False
-    wifi_avg_list = []
-    channel = []
+def pico_network_scan(wifi_ssid, scan_amount = 10, time_between_scans = 0.1):
+    """
+    Description:
 
+    Scans a given network, and returns the avg RSSI value and a list with all RSSI values based on a given amount of scans.
+
+    Parameters:
+
+    wifi_ssid           ; Str, the name of the wifi that should be scanned.
+
+    scan_amount         ; Int, the amount of scans to be made on that wifi network.
+
+    time_between_scans  ; Float, the time between each scan besides the time the scan itself takes.
+    """
+    # Create a list to contain RSSI values.
+    RSSI_list = []
+
+    # Create a new STA_IF network interface
     pico_scan_wlan = network.WLAN(network.STA_IF)
     pico_scan_wlan.active(True)
 
-    while channel_received == False:
-        networks = pico_scan_wlan.scan()
-        for w in networks:
-            if w[0].decode() == wifi_name:
-                channel.append(w[2])
-                channel_received = True
-                print(f'Access point {wifi_name} found!')
-
+    # Loop until scan_amount enables a return.
     while True:
+        # Scan wlan and collect the a RSSI value.
         networks = pico_scan_wlan.scan()
 
-        for w in networks:
-            if w[0].decode() == wifi_name:
-                wifi_avg_list.append(w[3])
-                channel.append(w[2])
+        for network_data in networks:
+            if network_data[0].decode() == wifi_ssid:
+                # Append the RSSI value to the RSSI list.
+                RSSI_list.append(network_data[3])
         
-        utime.sleep(time_between_network_scans)
+        # Sleep the given amount.
+        utime.sleep(time_between_scans)
 
-        if len(wifi_avg_list) >= scan_amount: 
-            avg_dBm = sum(wifi_avg_list)/len(wifi_avg_list)
-            return [channel, avg_dBm, wifi_avg_list, wifi_name]
+        # If the scan_amount have been reached return the average RSSI, 
+        # the RSSI_list and the name of the wifi that was scanned.
+        if len(RSSI_list) >= scan_amount: 
+            avg_RSSI = sum(RSSI_list)/len(RSSI_list)
+            return [avg_RSSI, RSSI_list, wifi_ssid]
 
