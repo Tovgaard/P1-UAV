@@ -345,7 +345,7 @@ def pico_data_control(access_point):
             LED.value(0)
             utime.sleep(0.05)
             
-            # If the request message had nothing in it break, else send the data as a reply to the client.
+            # if the request message had nothing in it break, else send the data as a reply to the client.
             if not return_data:
                 break
             else:
