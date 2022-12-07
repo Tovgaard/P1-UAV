@@ -1,9 +1,5 @@
 import socket, network, time
 
-# ssid and password for raspberry pi Pico W access point.
-ssid_pico = "PicoW"
-password_pico = "123456789"
-
 def drone_wlan_connect(ssid_drone='TELLO-gruppe-153', password_drone='pass=trold32'):
     """
     Description:

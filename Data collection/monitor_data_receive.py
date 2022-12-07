@@ -1,6 +1,6 @@
 import socket, time  
 
-# Client socket: monitor
+# Client socket: monitor.
 
 # Dummy data packet variable
 
@@ -13,7 +13,7 @@ client_socket.connect((host, port))
 
 length = 0
 
-close_server = False
+close_server = True
 
 while True:
 
@@ -35,7 +35,7 @@ while True:
         print(a)
       
     if length >= 5:
-        client_socket.sendall(b'exit') # Close the server on the pico, after we're done
+        # client_socket.sendall(b'exit') # Close the server on the pico, after we're done
         client_socket.close()
         break
 

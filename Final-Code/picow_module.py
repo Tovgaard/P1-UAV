@@ -1,4 +1,4 @@
-# Micropython, runs on the raspberry pi Pico W
+# Micropython, runs on the raspberry pi Pico W.
 import network, socket, machine, utime
 
 # Module we made, reads the GPS data and returns it as latitude longitude.
