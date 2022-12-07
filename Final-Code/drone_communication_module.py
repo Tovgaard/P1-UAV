@@ -109,11 +109,29 @@ def drone_socket_close(socket):
 
 
 def drone_socket_send_command(command, time_s, server_socket, drone_address):
+    """
+    Description:
 
+    Sends SDK commands to the drone an UDP server connected to the drone's access point.
+
+    Parameters:
+
+    command         ; Str, the action / command you want the drone to perform, see the tello SDK document: https://dl-cdn.ryzerobotics.com/downloads/Tello/Tello%20SDK%202.0%20User%20Guide.pdf
+
+    time_s          ; Float, time to wait before doing continuing, this is done to avoid overlapping commands, when these are performed in succession.
+
+    server_socket   ; Var as socket.socket(socket.AF_INET, socket.SOCK_DGRAM), a UDP server for sending the commands to the drone.
+
+    drone_address   ; Var as (drone_ip, drone_port), normally the ip is '192.168.10.1' and the port is '8889'.
+    """
+
+    # Convert the command str to a bytes object.
     command = bytes(command, 'utf-8')
     
+    # Send the bytes object to the drone's address through its access point by using the UDP server.
     server_socket.sendto(command, drone_address)
-    print(f'sent: {command}')
+    # Console DEBUG
+    # print(f'sent: {command}')
     time.sleep(time_s)
         
 
@@ -157,8 +175,6 @@ drone_address = server_socket_address[1]
 
 drone_socket_send_command('takeoff', 6, server_socket, drone_address)
 drone_socket_send_command('land', 5, server_socket, drone_address)
-
-# SDK commands: https://dl-cdn.ryzerobotics.com/downloads/Tello/Tello%20SDK%202.0%20User%20Guide.pdf
 
 # End connections
 wlan_disconnect(server_socket)
