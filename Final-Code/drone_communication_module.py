@@ -134,38 +134,6 @@ def drone_socket_send_command(command, time_s, server_socket, drone_address):
     # print(f'sent: {command}')
     time.sleep(time_s)
         
-
-def network_scan(scan_amount = 60, wifi_name = 'OnePlus 9 Pro', time_between_network_scans = 0.1):
-    channel_received = False
-    wifi_avg_list = []
-    channel = []
-
-    wlan = network.WLAN()
-    wlan.active(True)
-
-    while channel_received == False:
-        networks = wlan.scan()
-        for w in networks:
-            if w[0].decode() == wifi_name:
-                channel.append(w[2])
-                channel_received = True
-                print(f'Access point {wifi_name} found!')
-
-    while True:
-        networks = wlan.scan()
-
-        for w in networks:
-            if w[0].decode() == wifi_name:
-                wifi_avg_list.append(w[3])
-                channel.append(w[2])
-        
-        time.sleep(time_between_network_scans)
-
-        if len(wifi_avg_list) >= scan_amount: 
-            avg_dBm = sum(wifi_avg_list)/len(wifi_avg_list)
-            return [channel, avg_dBm, wifi_avg_list, wifi_name]
-
-
 # program:
 drone_wlan_connect()
 server_socket_address = server_socket_bind()

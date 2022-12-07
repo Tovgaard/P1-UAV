@@ -145,3 +145,35 @@ def pico_data_send(access_point):
                 break
             else:
                 client.sendall(encoded_data)
+
+
+def pico_network_scan(scan_amount = 10, wifi_name = 'OnePlus 9 Pro', time_between_network_scans = 0.1):
+    channel_received = False
+    wifi_avg_list = []
+    channel = []
+
+    pico_scan_wlan = network.WLAN(network.STA_IF)
+    pico_scan_wlan.active(True)
+
+    while channel_received == False:
+        networks = pico_scan_wlan.scan()
+        for w in networks:
+            if w[0].decode() == wifi_name:
+                channel.append(w[2])
+                channel_received = True
+                print(f'Access point {wifi_name} found!')
+
+    while True:
+        networks = pico_scan_wlan.scan()
+
+        for w in networks:
+            if w[0].decode() == wifi_name:
+                wifi_avg_list.append(w[3])
+                channel.append(w[2])
+        
+        utime.sleep(time_between_network_scans)
+
+        if len(wifi_avg_list) >= scan_amount: 
+            avg_dBm = sum(wifi_avg_list)/len(wifi_avg_list)
+            return [channel, avg_dBm, wifi_avg_list, wifi_name]
+
