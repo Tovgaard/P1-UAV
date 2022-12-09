@@ -26,15 +26,16 @@ def get_coordinates(gps_module):
 
         # Split the message using ','.
         NMEA_sentence = NMEA_array.split(',')
-        print(NMEA_sentence)
         # Check if it is the right NMEA sentence (the one with coordinates).
         if NMEA_sentence[0] is "b'$GPGGA":
-            if (NMEA_sentence[3] is ('N' or 'S')) and (NMEA_sentence[5] is ('E' or 'W')):
-                latitude = decimal_degree_converter(NMEA_sentence[2], NMEA_sentence[3])
-                longitude = decimal_degree_converter(NMEA_sentence[4], NMEA_sentence[5])
+            try:
+                if (NMEA_sentence[3] is ('N' or 'S')) and (NMEA_sentence[5] is ('E' or 'W')):
+                    latitude = decimal_degree_converter(NMEA_sentence[2], NMEA_sentence[3])
+                    longitude = decimal_degree_converter(NMEA_sentence[4], NMEA_sentence[5])
 
-                return [latitude, longitude]
-
+                    return [latitude, longitude]
+            except Exception:
+                None
 
 def decimal_degree_converter(geographic_coordinate, geographic_indicator):
 
@@ -294,8 +295,6 @@ def pico_data_control(access_point):
 
     counter = 0
     
-    # Use the LED pin for debugging purposes.
-    LED = machine.Pin('LED', machine.Pin.OUT)
     while True:
         # Accept the client if it connects to the port.
         client, address = server_socket.accept()
@@ -304,32 +303,29 @@ def pico_data_control(access_point):
             # Create a variable for the receiving request message from the client.
             return_data = client.recv(64)
 
-            # Turn the LED on.
-            LED.value(1)
 
             # If the request message is b'exit', close the server and end the program.
-            if str(return_data) is "b'exit'":
+            if str(return_data) is "b'emergency'":
 
-                # Console DEBUG
-                # print('Exit received, closing server!')
-                
+                # send_command('land', 5, server_socket_drone, drone_address_drone)
                 pico_access_point_end(access_point)
                 client.close()
+                print('Emergency land!')
                 return
             
             # Create a UART connection between the Pico W and the GPS module, using the rx Pin GP5, 
             # (pin 7 in the datasheet a.k.a. UART1_RX, as it is receiving), on the Pico W 
             # and pin 4 (TX, as it is transmitting) on the Neo-6m GPS module.
             GPS = machine.UART(1, baudrate=9600, tx=machine.Pin(4), rx=machine.Pin(5))
+
             # Scan the network and assign the RSSI value to a variable.
-            scan = pico_network_scan('eduroam', 2)
+            scan = pico_network_scan('eduroam', 5)
 
             rssi = scan[0]
 
             # Collect the GPS coordinates, using the module these have already been converted from NMEA to geographic coordinates.
-            # coordinates = gps.get_coordinates(GPS)
+            coordinates = get_coordinates(GPS)
 
-            coordinates = [1, 2]
             # Make a list of the data consisting of [Latitude, Longitude, RSSI].
             data_list = [coordinates[0], coordinates[1], rssi]
 
@@ -340,31 +336,31 @@ def pico_data_control(access_point):
             # Console DEBUG
             # print(f'Client: {client}, Address: {address}, Data: {encoded_data}.')
 
-            # Wait a tiny bit before turning the LED on to indicate a reply with the data was send.
-            utime.sleep(0.05)
-            LED.value(0)
-            utime.sleep(0.05)
-            
             # if the request message had nothing in it break, else send the data as a reply to the client.
             if not return_data:
                 break
             else:
                 client.sendall(encoded_data)
                 counter += 1
+
                 if counter == 1:
-                    send_command('right 40', 2, server_socket_drone, drone_address_drone)
+                    # send_command('takeoff', 3, server_socket_drone, drone_address_drone)
+                    print('1')
 
-                if counter == 2:
-                    send_command('land', 2, server_socket_drone, drone_address_drone)
-                    break
+                elif counter == 2:
+                    #send_command('right 50', 4, server_socket_drone, drone_address_drone)
+                    print('2')
+                elif counter == 30:
+                    #send_command('land', 2, server_socket_drone, drone_address_drone)
+                    client.sendall(b'finished')
 
-        if counter == 2:
-                    break
+                    # Stop server
+                    pico_access_point_end(access_point)
+                    print('Closed server')
+                    return
                     
 
-
-
-def pico_network_scan(wifi_ssid, scan_amount = 10, time_between_scans = 0.1):
+def pico_network_scan(wifi_ssid, scan_amount = 10, time_between_scans = 0):
     """
     Description:
 
@@ -406,18 +402,16 @@ def pico_network_scan(wifi_ssid, scan_amount = 10, time_between_scans = 0.1):
 
 
 # program:
-wlan = wlan_connect_drone_ap()
-server_socket_address = server_socket_bind()
+# wlan = wlan_connect_drone_ap()
+# server_socket_address = server_socket_bind()
 
-server_socket_drone = server_socket_address[0]
-drone_address_drone = server_socket_address[1]
+# server_socket_drone = server_socket_address[0]
+# drone_address_drone = server_socket_address[1]
 
 pico_ap = pico_access_point_create()
-
-send_command('takeoff', 3, server_socket_drone, drone_address_drone)
 
 pico_data_control(pico_ap)
 
 # End connections
-wlan_disconnect_drone_ap(wlan)
-server_socket_close(server_socket_drone)
+# wlan_disconnect_drone_ap(wlan)
+# server_socket_close(server_socket_drone)
