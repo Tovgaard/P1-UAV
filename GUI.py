@@ -55,9 +55,9 @@ draw = False
 
 sg.theme('DarkGrey6')
 
-input_layout = [[sg.Input('network', key = '-ssid.input-', size = (10, 10))],
-                [sg.Input('5', key = '-scan_amount.input-', size = (10, 10))], 
-                [sg.Input('8', key = '-gps_read_amount.input-', size = (10, 10))]]
+input_layout = [[sg.Button('', disabled=True, button_color='grey25', border_width=0)],[sg.Input('network', key = '-ssid.input-', size = (10, 10))],
+                [sg.Spin(values = [i for i in range(1, 1000)], key = '-scan_amount.spin-', size = (5, 0), initial_value=5)], 
+                [sg.Spin(values = [i for i in range(1, 1000)], key = '-gps_read_amount.spin-', size = (5, 0), initial_value=10)]]
 
 layout = [[sg.Button('Connect',key = "-connect.to.pico-"), sg.Checkbox("",default=False, disabled=True, key='-check-'),sg.Text('', key = '-connecting.text-')],
           [sg.Text('Wi-Fi ssid:')],
@@ -72,7 +72,7 @@ data_layout = [[sg.Button('Emergency landing',key = "-emergency_landing-")],
                [sg.Button('Show RSSI heatmap', key = "-graph.button-")],
                [sg.Canvas(key = '-graph-')]]
 
-final_layout = [[sg.Column(layout, vertical_alignment = 'c'), sg.Column(input_layout, vertical_alignment = 'c')], data_layout]
+final_layout = [[sg.Column(layout, vertical_alignment = 'c'), sg.Column(input_layout, vertical_alignment = 'top')], data_layout]
 
 window = sg.Window('Jammer locator',
                     layout = final_layout,
@@ -98,15 +98,15 @@ while True:
         data_list = []
         network_message = 0
 
-
         while True:
-            if (str(values['-ssid.input-']) != '') and (str(values['-scan_amount.input-']) != '') and (str(values['-gps_read_amount.input-']) != ''):
+            if (str(values['-ssid.input-']) != '') and (str(values['-scan_amount.spin-']) != '') and (str(values['-gps_read_amount.spin-']) != ''):
                 if network_message == 0:
                     window.Element('-error.text-').Update('')
-                    config_message = f"network {str(values['-ssid.input-'])} {str(values['-scan_amount.input-'])} {str(values['-gps_read_amount.input-'])}"
+                    config_message = f"config {str(values['-ssid.input-'])} {str(values['-scan_amount.spin-'])} {str(values['-gps_read_amount.spin-'])}"
                     client_socket.sendall(bytes(config_message, 'utf-8'))
                     window['-find.jammer.button-'].Update(disabled=True)
                     network_message += 1
+                    print(config_message)
                 else:
                     client_socket.sendall(b'Send data!')
             else:
@@ -158,8 +158,6 @@ while True:
             if fig_gui != None:
                 delete_fig(fig_gui)
             draw = False
-
-
 
     if event == sg.WIN_CLOSED:
         client_socket.close()
