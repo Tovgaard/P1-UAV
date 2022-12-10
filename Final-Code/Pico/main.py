@@ -36,7 +36,7 @@ def gps_fix(gps_module):
     return False
 
 
-def get_coordinates(gps_module):
+def get_coordinates(gps_module, gps_read_amount):
     """
     Description:
 
@@ -46,16 +46,22 @@ def get_coordinates(gps_module):
 
     gps_module          ; UART, takes an UART connection from machine import, a build in library in micropython, uses a ublox neo-6m gps module.
 
+    gps_read_amount     ; Int, the amount of collected GPS coordinates that should be used to get an average coordinate set.
+
     Returns:
 
     List       ; [float Latitude, float Longitude], returns a list containing the GPS position in Latitude and Longitude.
     """
+    # A list for getting the average coordinates
+    coordinates_list_lat = []
+    coordinates_list_long = []
+
+    # Array for storing NMEA sentences.
+    NMEA_array = bytearray(255)
+
     while True:
         # Sleeps 0,08s otherwise NMEA sentences are not returned in one sentence.
         utime.sleep(0.08)
-
-        # Array for storing NMEA sentences.
-        NMEA_array = bytearray(255)
 
         # Read the array
         NMEA_array = str(gps_module.readline())
@@ -69,7 +75,13 @@ def get_coordinates(gps_module):
                     latitude = decimal_degree_converter(NMEA_sentence[2], NMEA_sentence[3])
                     longitude = decimal_degree_converter(NMEA_sentence[4], NMEA_sentence[5])
 
-                    return [latitude, longitude]
+                    coordinates_list_lat.append(latitude)
+                    coordinates_list_long.append(longitude)
+
+                    if len(coordinates_list_lat) == gps_read_amount:
+                        return [sum(coordinates_list_lat)/len(coordinates_list_lat), sum(coordinates_list_long)/len(coordinates_list_long)]
+
+
             except Exception:
                 None
 
@@ -358,19 +370,24 @@ def pico_data_control(access_point):
                 print('Emergency land!')
                 return
 
+            # The first received message from the monitor
             if 'network' in str(return_data):
-                network_ssid_list = str(return_data)
-                network_ssid_list = network_ssid_list.split(' ')
-                network_ssid = str(network_ssid_list[1][0:len(network_ssid_list[1])-1])
+                variables_set_list = str(return_data)
+                variables_set_list = variables_set_list.split(' ')
+                network_ssid = str(variables_set_list[1])
+                network_scan_amount = str(variables_set_list[2])
+                gps_read_amount = str(variables_set_list[3][0:len(variables_set_list[3])-1])
+                
+                print(network_ssid, network_scan_amount, gps_read_amount)
 
             # Scan the network and assign the RSSI value to a variable.
-            scan = pico_network_scan(network_ssid, 5)
+            scan = pico_network_scan(network_ssid, int(network_scan_amount))
 
             # The RSSI value in the tuple returned by the pico_network_scan() function
             rssi = scan[0]
 
             # Collect the GPS coordinates, using the module these have already been converted from NMEA to geographic coordinates.
-            coordinates = get_coordinates(GPS)
+            coordinates = get_coordinates(GPS, int(gps_read_amount))
 
             # Make a list of the data consisting of [Latitude, Longitude, RSSI].
             data_list = [coordinates[0], coordinates[1], rssi]
