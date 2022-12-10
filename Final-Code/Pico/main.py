@@ -1,5 +1,41 @@
 import socket, network, utime, machine
 
+def gps_fix(gps_module):
+    """
+    Description:
+
+    A function to make sure that a gps fix have been received before starting the main program.
+
+    Parameters:
+
+    gps_module          ; UART, takes an UART connection from machine import, a build in library in micropython, uses a ublox neo-6m gps module.
+
+    Returns:
+
+    Bool        ; Returns True if a geographic coordinate set have been received from the ublox module.
+    """
+    # Sleeps 0,08s otherwise NMEA sentences are not returned in one sentence, 
+    # this most likely happens because of the data transfer protocol from the ublox module to the pico.
+    utime.sleep(0.08)
+
+    # Array for storing NMEA sentences.
+    NMEA_array = bytearray(255)
+
+    # Read the array
+    NMEA_array = str(gps_module.readline())
+
+    # Split the message using ','.
+    NMEA_sentence = NMEA_array.split(',')
+
+    # Return True if a real geographic coordinate set have been received.
+    if NMEA_sentence[0] is "b'$GPGGA":
+        if (NMEA_sentence[3] is ('N' or 'S')) and (NMEA_sentence[5] is ('E' or 'W')):
+            return True
+
+    # Else return False.
+    return False
+
+
 def get_coordinates(gps_module):
     """
     Description:
@@ -8,7 +44,7 @@ def get_coordinates(gps_module):
 
     Parameters:
 
-    gps_module          ; UART, takes an UART connection from machine import, an build in library in micropython.
+    gps_module          ; UART, takes an UART connection from machine import, a build in library in micropython, uses a ublox neo-6m gps module.
 
     Returns:
 
@@ -36,6 +72,7 @@ def get_coordinates(gps_module):
                     return [latitude, longitude]
             except Exception:
                 None
+
 
 def decimal_degree_converter(geographic_coordinate, geographic_indicator):
 
@@ -280,6 +317,11 @@ def pico_data_control(access_point):
 
     access_point        ; Var of the type network.WLAN(network.AP_IF).
     """
+    # Create a UART connection between the Pico W and the GPS module, using the rx Pin GP5, 
+    # (pin 7 in the datasheet a.k.a. UART1_RX, as it is receiving), on the Pico W 
+    # and pin 4 (TX, as it is transmitting) on the Neo-6m GPS module.
+    GPS = machine.UART(1, baudrate=9600, tx=machine.Pin(4), rx=machine.Pin(5))
+
     # Create the TCP server socket.
     server_socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
     
@@ -294,7 +336,11 @@ def pico_data_control(access_point):
     server_socket.listen(1)
 
     counter = 0
-    
+
+    # Activate the rest of the program, if the gps has a fix.
+    while gps_fix(GPS) == False:
+        pass
+
     while True:
         # Accept the client if it connects to the port.
         client, address = server_socket.accept()
@@ -302,7 +348,6 @@ def pico_data_control(access_point):
         while True:
             # Create a variable for the receiving request message from the client.
             return_data = client.recv(64)
-
 
             # If the request message is b'exit', close the server and end the program.
             if str(return_data) is "b'emergency'":
@@ -312,15 +357,16 @@ def pico_data_control(access_point):
                 client.close()
                 print('Emergency land!')
                 return
-            
-            # Create a UART connection between the Pico W and the GPS module, using the rx Pin GP5, 
-            # (pin 7 in the datasheet a.k.a. UART1_RX, as it is receiving), on the Pico W 
-            # and pin 4 (TX, as it is transmitting) on the Neo-6m GPS module.
-            GPS = machine.UART(1, baudrate=9600, tx=machine.Pin(4), rx=machine.Pin(5))
+
+            if 'network' in str(return_data):
+                network_ssid_list = str(return_data)
+                network_ssid_list = network_ssid_list.split(' ')
+                network_ssid = str(network_ssid_list[1][0:len(network_ssid_list[1])-1])
 
             # Scan the network and assign the RSSI value to a variable.
-            scan = pico_network_scan('eduroam', 5)
+            scan = pico_network_scan(network_ssid, 5)
 
+            # The RSSI value in the tuple returned by the pico_network_scan() function
             rssi = scan[0]
 
             # Collect the GPS coordinates, using the module these have already been converted from NMEA to geographic coordinates.
@@ -350,12 +396,13 @@ def pico_data_control(access_point):
                 elif counter == 2:
                     #send_command('right 50', 4, server_socket_drone, drone_address_drone)
                     print('2')
-                elif counter == 30:
+                elif counter == 6:
                     #send_command('land', 2, server_socket_drone, drone_address_drone)
                     client.sendall(b'finished')
-
+                    utime.sleep(1)
                     # Stop server
                     pico_access_point_end(access_point)
+                    client.close()
                     print('Closed server')
                     return
                     
