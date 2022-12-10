@@ -473,7 +473,7 @@ def locating_algorithm(current_rssi, previous_rssi, previous_direction, UDP_serv
 
     # Maybe needs a limit, like +5 to ensure the direction is correct enough.
 
-    # Right movement
+    # Right movement.
     elif (current_rssi > previous_rssi) and previous_direction == 'right':
         return random_direction(UDP_server_object, drone_address, 'left')
 
@@ -481,7 +481,7 @@ def locating_algorithm(current_rssi, previous_rssi, previous_direction, UDP_serv
         send_command('left 100', 4, UDP_server_object, drone_address)
         return 'left'
 
-    # Left movement
+    # Left movement.
     elif (current_rssi > previous_rssi) and previous_direction == 'left':
         return random_direction(UDP_server_object, drone_address, 'right')
 
@@ -489,7 +489,7 @@ def locating_algorithm(current_rssi, previous_rssi, previous_direction, UDP_serv
         send_command('right 100', 4, UDP_server_object, drone_address)
         return 'right'
 
-    # Forward movement
+    # Forward movement.
     elif (current_rssi > previous_rssi) and previous_direction == 'forward':
         return  random_direction(UDP_server_object, drone_address, 'back')
 
@@ -497,7 +497,7 @@ def locating_algorithm(current_rssi, previous_rssi, previous_direction, UDP_serv
         send_command('back 100', 4, UDP_server_object, drone_address)
         return 'back'
 
-    # Backwards movement
+    # Backwards movement.
     elif (current_rssi > previous_rssi) and previous_direction == 'back':
         return random_direction(UDP_server_object, drone_address, 'forward')
 
