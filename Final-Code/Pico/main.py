@@ -137,11 +137,12 @@ def wlan_connect_drone_ap(ssid_drone='TELLO-gruppe-153', password_drone='pass=tr
     pico_wlan       ; Var as network.WLAN(network.STA_IF), the wlan connection to the drone's access point.
     """
     # Connect to the drone's access point using the wlan STA_IF (station / client) interface.
+    
     pico_wlan = network.WLAN(network.STA_IF)
     pico_wlan.active(True)
     pico_wlan.connect(ssid_drone, password_drone)
     
-    # If wlan is not connected return.
+    # Wait for the wlan to connect
     while pico_wlan.isconnected() == False:
         None
 
@@ -218,8 +219,6 @@ def server_socket_close(socket):
 
     socket      ; Var as socket.socket(socket.AF_INET, socket.SOCK_DGRAM), the server socket.
     """
-    # Console DEBUG
-    # print('Socket closed!')
 
     # Close the socket.
     socket.close()
@@ -349,9 +348,10 @@ def pico_data_control(access_point, UDP_server_object, drone_address):
     direction_list = []
 
     # Activate the rest of the program, if the gps has a fix.
+    
     while gps_fix(GPS) == False:
         pass
-
+    
     while True:
         # Accept the client if it connects to the port.
         client, address = server_socket.accept()
@@ -359,8 +359,12 @@ def pico_data_control(access_point, UDP_server_object, drone_address):
         while True:
             # Create a variable for the receiving request message from the client.
             return_data = client.recv(64)
+            
+            # if the request message had nothing in it break, else send the data as a reply to the client.
+            if not return_data:
+                break
 
-            # If the request message is b'exit', close the server and end the program.
+            # If the request message is b'emergency', close the server and end the program.
             if str(return_data) is "b'emergency'":
 
                 # send_command('land', 5, server_socket_drone, drone_address_drone)
@@ -394,35 +398,34 @@ def pico_data_control(access_point, UDP_server_object, drone_address):
 
             # Get the new direction the drone needs to head, based on the current and previous RSSI.
             if counter != 0:
-                new_drone_direction = locating_algorithm(rssi_list[counter], rssi[counter-1], direction_list[counter-1], UDP_server_object, drone_address)
+                new_drone_direction = locating_algorithm(rssi_list[counter], rssi_list[counter-1], direction_list[counter-1], UDP_server_object, drone_address)
                 direction_list.append(new_drone_direction)
 
             # Only executed once, to start the algorithm.
             if counter == 0:
-                new_drone_direction = locating_algorithm(rssi_list[counter], rssi[counter], None, UDP_server_object, drone_address)
+                send_command('takeoff', 5, UDP_server_object, drone_address)
+                new_drone_direction = locating_algorithm(rssi_list[counter], rssi_list[counter], None, UDP_server_object, drone_address)
                 direction_list.append(new_drone_direction)
 
             # Convert the data_list into a string and encode it so the server can send the reply in binary.
             data_str = str(data_list)
             encoded_data = data_str.encode()
 
-            # if the request message had nothing in it break, else send the data as a reply to the client.
-            if not return_data:
-                break
 
-            else:
-                client.sendall(encoded_data)
-                counter += 1
+            client.sendall(encoded_data)
+            print(counter)
+            counter += 1
 
-                if counter == 6:
-                    #send_command('land', 2, server_socket_drone, drone_address_drone)
-                    client.sendall(b'finished')
-                    utime.sleep(1)
-                    # Stop server
-                    pico_access_point_end(access_point)
-                    client.close()
-                    print('Closed server')
-                    return
+            # Currently hardcoded to stop after 30 scans
+            if counter == 30:
+                send_command('land', 2, UDP_server_object, drone_address)
+                client.sendall(b'finished')
+                utime.sleep(1)
+
+                # Stop server
+                pico_access_point_end(access_point)
+                client.close()
+                return
                     
 
 def pico_network_scan(wifi_ssid, scan_amount = 10, time_between_scans = 0):
@@ -478,7 +481,7 @@ def locating_algorithm(current_rssi, previous_rssi, previous_direction, UDP_serv
         return random_direction(UDP_server_object, drone_address, 'left')
 
     elif (current_rssi < previous_rssi) and previous_direction == 'right':
-        send_command('left 100', 4, UDP_server_object, drone_address)
+        send_command('left 100', 6, UDP_server_object, drone_address)
         return 'left'
 
     # Left movement.
@@ -486,7 +489,7 @@ def locating_algorithm(current_rssi, previous_rssi, previous_direction, UDP_serv
         return random_direction(UDP_server_object, drone_address, 'right')
 
     elif (current_rssi < previous_rssi) and previous_direction == 'left':
-        send_command('right 100', 4, UDP_server_object, drone_address)
+        send_command('right 100', 6, UDP_server_object, drone_address)
         return 'right'
 
     # Forward movement.
@@ -494,7 +497,7 @@ def locating_algorithm(current_rssi, previous_rssi, previous_direction, UDP_serv
         return  random_direction(UDP_server_object, drone_address, 'back')
 
     elif (current_rssi < previous_rssi) and previous_direction == 'forward':
-        send_command('back 100', 4, UDP_server_object, drone_address)
+        send_command('back 100', 6, UDP_server_object, drone_address)
         return 'back'
 
     # Backwards movement.
@@ -502,7 +505,7 @@ def locating_algorithm(current_rssi, previous_rssi, previous_direction, UDP_serv
         return random_direction(UDP_server_object, drone_address, 'forward')
 
     elif (current_rssi < previous_rssi) and previous_direction == 'back':
-        send_command('forward 100', 4, UDP_server_object, drone_address)
+        send_command('forward 100', 6, UDP_server_object, drone_address)
         return 'forward'
 
 def random_direction(UDP_server_object, drone_address, blocked_direction):
@@ -512,19 +515,19 @@ def random_direction(UDP_server_object, drone_address, blocked_direction):
         random_number = random.randint(1, 4)
 
         if (random_number == 1) and (blocked_direction != 'right'):
-            send_command('right 100', 4, UDP_server_object, drone_address)
+            send_command('right 100', 6, UDP_server_object, drone_address)
             direction = 'right'
 
         elif (random_number == 2) and (blocked_direction != 'left'):
-            send_command('left 100', 4, UDP_server_object, drone_address)
+            send_command('left 100', 6, UDP_server_object, drone_address)
             direction = 'left'
 
         elif (random_number == 3) and (blocked_direction != 'forward'):
-            send_command('forward 100', 4, UDP_server_object, drone_address)
+            send_command('forward 100', 6, UDP_server_object, drone_address)
             direction = 'forward'
 
         elif (random_number == 4) and (blocked_direction != 'back'):
-            send_command('back 100', 4, UDP_server_object, drone_address)
+            send_command('back 100', 6, UDP_server_object, drone_address)
             direction = 'back'
 
     return direction
@@ -541,9 +544,8 @@ def main():
 
     pico_data_control(pico_ap, UDP_server_object, drone_address)
 
-
-
     # End connections
     wlan_disconnect_drone_ap(wlan)
-    server_socket_close(server_socket_drone)
+    server_socket_close(UDP_server_object)
 
+main()

@@ -1,4 +1,4 @@
-import numpy as np, matplotlib, matplotlib.pyplot as plt, PySimpleGUI as sg, socket, time
+import numpy as np, matplotlib, matplotlib.pyplot as plt, PySimpleGUI as sg, socket, time, _thread
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 matplotlib.use("TkAgg")
 
@@ -66,8 +66,7 @@ layout = [[sg.Button('Connect',key = "-connect.to.pico-"), sg.Checkbox("",defaul
           [sg.Button('Find Jammer', key = "-find.jammer.button-", disabled=True)], 
           [sg.Text('', key = '-error.text-')]]
 
-data_layout = [[sg.Button('Emergency landing',key = "-emergency_landing-")],
-               [sg.Table(headings = header_list, values = eval_data, key = '-data.table-', visible = True, justification = 'right', 
+data_layout = [[sg.Table(headings = header_list, values = eval_data, key = '-data.table-', visible = True, justification = 'right', 
                      col_widths = [7, 11], auto_size_columns = False, sbar_background_color='grey25', num_rows=8, alternating_row_color='grey20')],
                [sg.Button('Show RSSI heatmap', key = "-graph.button-")],
                [sg.Canvas(key = '-graph-')]]
@@ -119,8 +118,8 @@ while True:
             if "finished" in decoded_data:
                 client_socket.close()
                 break
-            else:
 
+            else:
                 try:
                     eval_data = eval(decoded_data)
                     data_list.append(eval_data)
@@ -160,6 +159,8 @@ while True:
             draw = False
 
     if event == sg.WIN_CLOSED:
+        client_socket.sendall(b'emergency')
+        time.sleep(10)
         client_socket.close()
         break
 
