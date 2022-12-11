@@ -386,7 +386,7 @@ def pico_data_control(access_point, UDP_server_object, drone_address):
             # Scan the network and assign the RSSI value to a variable.
             scan = pico_network_scan(network_ssid, int(network_scan_amount))
 
-            # The RSSI value in the tuple returned by the pico_network_scan() function
+            # The RSSI value in the tuple returned by the pico_network_scan() function.
             rssi = scan[0]
 
             # Collect the GPS coordinates, using the module these have already been converted from NMEA to geographic coordinates.

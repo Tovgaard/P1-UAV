@@ -38,7 +38,7 @@ data_list = [[0, 0, 0]]
 
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  
 
-host = '192.168.4.1'    # ip of raspberry pi pico W
+host = '192.168.4.1'    # ip of raspberry pi pico W.
 port = 12345
 
 server_address = (host, port)
