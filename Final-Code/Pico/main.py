@@ -347,11 +347,13 @@ def pico_data_control(access_point, UDP_server_object, drone_address):
     rssi_list = []
     direction_list = []
 
+    fix = False
+
     # Activate the rest of the program, if the gps has a fix.
-    
-    while gps_fix(GPS) == False:
-        pass
-    
+    """
+    while fix == False:
+        fix = gps_fix(GPS)
+    """
     while True:
         # Accept the client if it connects to the port.
         client, address = server_socket.accept()
@@ -390,10 +392,14 @@ def pico_data_control(access_point, UDP_server_object, drone_address):
             rssi = scan[0]
 
             # Collect the GPS coordinates, using the module these have already been converted from NMEA to geographic coordinates.
+            """
             coordinates = get_coordinates(GPS, int(gps_read_amount))
+            """
+            coordinates = [1, 2]
 
+            Index = counter
             # Make a list of the data consisting of [Latitude, Longitude, RSSI].
-            data_list = [coordinates[0], coordinates[1], rssi]
+            data_list = [Index, coordinates[0], coordinates[1], rssi]
             rssi_list.append(rssi)
 
             # Get the new direction the drone needs to head, based on the current and previous RSSI.
@@ -418,7 +424,7 @@ def pico_data_control(access_point, UDP_server_object, drone_address):
 
             # Currently hardcoded to stop after 30 scans
             if counter == 30:
-                send_command('land', 2, UDP_server_object, drone_address)
+                send_command('land', 5, UDP_server_object, drone_address)
                 client.sendall(b'finished')
                 utime.sleep(1)
 
@@ -481,7 +487,7 @@ def locating_algorithm(current_rssi, previous_rssi, previous_direction, UDP_serv
         return random_direction(UDP_server_object, drone_address, 'left')
 
     elif (current_rssi < previous_rssi) and previous_direction == 'right':
-        send_command('left 100', 6, UDP_server_object, drone_address)
+        send_command('left 300', 6, UDP_server_object, drone_address)
         return 'left'
 
     # Left movement.
@@ -489,7 +495,7 @@ def locating_algorithm(current_rssi, previous_rssi, previous_direction, UDP_serv
         return random_direction(UDP_server_object, drone_address, 'right')
 
     elif (current_rssi < previous_rssi) and previous_direction == 'left':
-        send_command('right 100', 6, UDP_server_object, drone_address)
+        send_command('right 300', 6, UDP_server_object, drone_address)
         return 'right'
 
     # Forward movement.
@@ -497,7 +503,7 @@ def locating_algorithm(current_rssi, previous_rssi, previous_direction, UDP_serv
         return  random_direction(UDP_server_object, drone_address, 'back')
 
     elif (current_rssi < previous_rssi) and previous_direction == 'forward':
-        send_command('back 100', 6, UDP_server_object, drone_address)
+        send_command('back 300', 6, UDP_server_object, drone_address)
         return 'back'
 
     # Backwards movement.
@@ -505,7 +511,7 @@ def locating_algorithm(current_rssi, previous_rssi, previous_direction, UDP_serv
         return random_direction(UDP_server_object, drone_address, 'forward')
 
     elif (current_rssi < previous_rssi) and previous_direction == 'back':
-        send_command('forward 100', 6, UDP_server_object, drone_address)
+        send_command('forward 300', 6, UDP_server_object, drone_address)
         return 'forward'
 
 def random_direction(UDP_server_object, drone_address, blocked_direction):
@@ -515,19 +521,19 @@ def random_direction(UDP_server_object, drone_address, blocked_direction):
         random_number = random.randint(1, 4)
 
         if (random_number == 1) and (blocked_direction != 'right'):
-            send_command('right 100', 6, UDP_server_object, drone_address)
+            send_command('right 300', 6, UDP_server_object, drone_address)
             direction = 'right'
 
         elif (random_number == 2) and (blocked_direction != 'left'):
-            send_command('left 100', 6, UDP_server_object, drone_address)
+            send_command('left 300', 6, UDP_server_object, drone_address)
             direction = 'left'
 
         elif (random_number == 3) and (blocked_direction != 'forward'):
-            send_command('forward 100', 6, UDP_server_object, drone_address)
+            send_command('forward 300', 6, UDP_server_object, drone_address)
             direction = 'forward'
 
         elif (random_number == 4) and (blocked_direction != 'back'):
-            send_command('back 100', 6, UDP_server_object, drone_address)
+            send_command('back 300', 6, UDP_server_object, drone_address)
             direction = 'back'
 
     return direction
