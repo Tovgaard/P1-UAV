@@ -2,6 +2,7 @@
 from math import log10
 import network, time
 
+# Distance test
 
 def network_scan(scan_amount = 60, wifi_name = 'OnePlus 9 Pro', time_between_network_scans = 0.1):
     channel_received = False

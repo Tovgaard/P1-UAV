@@ -1,6 +1,6 @@
 import socket, network, utime, machine, random
 
-# Create functions:
+# Create functions
 
 def gps_fix(gps_module):
     """

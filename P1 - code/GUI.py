@@ -72,7 +72,7 @@ data_list = [[]]
 # Assign a variable to the TCP client.
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  
 
-# Assign the host and port, that the data will be streaming through.
+# Assign the host and port that the data will be streaming through.
 host = '192.168.4.1'
 port = 12345
 

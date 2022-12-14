@@ -160,7 +160,7 @@ def pico_network_scan(wifi_ssid, scan_amount = 10, time_between_scans = 0.1):
 
     time_between_scans  ; Float, the time between each scan besides the time the scan itself takes.
     """
-    # Create a list to contain RSSI values.
+    # Create a list to contain RSSI values
     RSSI_list = []
 
     # Create a new STA_IF network interface

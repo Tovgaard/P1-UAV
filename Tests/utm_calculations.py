@@ -4,7 +4,7 @@ latitude = 57.0157
 
 longitude = 9.984072
 
-# Conversion from degrees to radians
+# Conversion from degrees to radians.
 rad_lat = latitude * (math.pi/180)
 rad_long = longitude * (math.pi/180)
 

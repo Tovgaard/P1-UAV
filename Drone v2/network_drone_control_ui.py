@@ -3,7 +3,7 @@
 import PySimpleGUI as gui, time
 from djitellopy import tello
 
-# Initialize and connect drone
+# Initialize and connect drone.
 drone = tello.Tello()
 drone.connect()
 

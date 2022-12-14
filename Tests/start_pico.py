@@ -18,7 +18,7 @@ def displayAvailableNetworks():
 	os.system(command)
 
 
-# display available networks
+# display available networks.
 displayAvailableNetworks()
 
 # input wifi name and password

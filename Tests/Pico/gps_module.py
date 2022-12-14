@@ -23,7 +23,7 @@ def get_coordinates(gps_module):
         # Sleeps 0,08s otherwise NMEA sentences are not returned in one sentence.
         utime.sleep(0.08)
 
-        # Array for storing NMEA sentences.
+        # Array for storing NMEA sentences
         NMEA_array = bytearray(255)
 
         # Read the array

@@ -1,5 +1,6 @@
 import _thread, machine, utime, gc
 
+# Test
 def core_2():
     while True:
         utime.sleep(2)

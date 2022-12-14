@@ -69,7 +69,7 @@ def decimal_degree_converter(geographic_coordinate, geographic_indicator):
         conversion = degrees - seconds/60
         return conversion
 
-# print(get_coordinates(gps))
+# print(get_coordinates(gps)).
 
 # Source (decimal conversion): https://forums.raspberrypi.com/viewtopic.php?t=175163o
 

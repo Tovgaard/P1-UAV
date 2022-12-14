@@ -18,7 +18,7 @@ close_server = False
 while True:
 
     if close_server is True:
-        client_socket.sendall(b'exit') # Close the server on the pico, after we're done
+        client_socket.sendall(b'exit') # Close the server on the pico, after we're done.
         client_socket.close()
         print('Send closing message to server!')
         break

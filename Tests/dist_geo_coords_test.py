@@ -1,5 +1,7 @@
 import math
 
+# Dist geo coords test
+
 lat1 = 57.014897
 lon1 = 9.983773
 

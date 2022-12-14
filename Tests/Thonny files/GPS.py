@@ -1,6 +1,6 @@
 from machine import Pin, UART
 
-#Import utime library to implement delay
+#Import utime library to implement delay.
 import utime, time, math
 
 #GPS Module UART Connection

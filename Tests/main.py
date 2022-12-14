@@ -1,5 +1,6 @@
 import machine, utime
 
+# LED test
 LED = machine.Pin('LED', machine.Pin.OUT)
 
 while True:

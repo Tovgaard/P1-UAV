@@ -1,6 +1,6 @@
 import socket, time
 
-# Assign ip and port to client and server
+# Assign ip and port to client and server.
 # Client
 tello_ip = '192.168.10.1'
 tello_port = 8889
