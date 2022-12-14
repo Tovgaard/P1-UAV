@@ -2,6 +2,8 @@ import numpy as np, matplotlib, matplotlib.pyplot as plt, PySimpleGUI as sg, soc
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 matplotlib.use("TkAgg")
 
+# Create functions.
+
 def draw_3D_graph(canvas, graph):
     """
     Description:
