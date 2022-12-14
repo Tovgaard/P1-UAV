@@ -340,10 +340,10 @@ def pico_data_control(LED, access_point, UDP_server_object, drone_socket):
     gps_read_amount = None
 
     # Activate the rest of the program, if the gps has a fix.
-    """
+    
     while fix == False:
         fix = gps_fix(GPS)
-    """
+    
     # Turn on the LED to show that the GPS got a fix.
     LED.value(1)
 
@@ -382,7 +382,6 @@ def pico_data_control(LED, access_point, UDP_server_object, drone_socket):
 
             # Collect the GPS coordinates, using the module these have already been converted from NMEA to geographic coordinates.
             coordinates = get_coordinates(GPS, int(gps_read_amount))
-            
             
             # Get the new direction the drone needs to head, based on the current and previous RSSI.
             # Only executed once, to start the algorithm.
