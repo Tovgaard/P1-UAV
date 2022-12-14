@@ -355,7 +355,7 @@ def pico_data_control(LED, access_point, UDP_server_object, drone_socket):
         client, address = server_socket.accept()
 
         while True:
-            # Create a variable for the receiving request message from the client.
+            # Create a variable for the receiving request message from the pico W TCP server.
             return_data = client.recv(64)
 
             # if the request message had nothing in it break, else send the data as a reply to the client.
