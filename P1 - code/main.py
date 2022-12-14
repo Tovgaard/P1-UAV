@@ -12,7 +12,7 @@ def gps_fix(gps_module):
 
     Returns:
 
-    Bool        ; Returns True if a geographic coordinate set have been received from the ublox module.
+    Bool        ; Returns True if a geographic coordinate set have been received from the ublox module, else False.
     """
     # Sleeps 0,08s otherwise NMEA sentences are not returned in one sentence, 
     # this most likely happens because of the data transfer protocol from the ublox module to the pico.
@@ -49,7 +49,7 @@ def get_coordinates(gps_module, gps_read_amount):
 
     Returns:
 
-    List       ; [float Latitude, float Longitude], returns a list containing the GPS position in Latitude and Longitude.
+    List       ; [float Latitude, float Longitude], containing the average GPS position in Latitude and Longitude based on the gps_read_amount.
     """
     # A list for getting the average coordinates
     coordinates_list_lat = []
@@ -360,7 +360,7 @@ def pico_data_control(LED, access_point, UDP_server_object, drone_socket):
             if not return_data:
                 break
 
-            # The first received message from the monitor
+            # The first received message from the monitor, should always be config, setting up some important variables.
             if 'config' in str(return_data):
                 variables_set_list = str(return_data)
                 variables_set_list = variables_set_list.split(' ')
@@ -437,6 +437,11 @@ def pico_network_scan(UDP_server_object, drone_socket, wifi_ssid, scan_amount = 
     scan_amount         ; Int, the amount of scans to be made on that wifi network.
 
     time_between_scans  ; Float, the time between each scan besides the time the scan itself takes.
+
+    Returns:
+
+    List        ; [avg_RSSI, RSSI_list, wifi_ssid], where avg_RSSI is the average rssi based on scan_amount, 
+                  RSSI_list is all RSSI values found during the scan and wifi_ssid is the ssid of the wifi.
     """
     # Create a list to contain RSSI values.
     RSSI_list = []
