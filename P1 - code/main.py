@@ -428,6 +428,10 @@ def pico_network_scan(UDP_server_object, drone_socket, wifi_ssid, scan_amount = 
 
     Parameters:
 
+    UDP_server_object   ; Var of the type socket.socket(socket.AF_INET, socket.SOCK_DGRAM).
+
+    drone_socket        ; Socket of the Ryze Tello (IP = 192.168.10.1, port = 8889), only the port number is changable.
+
     wifi_ssid           ; Str, the name of the wifi that should be scanned.
 
     scan_amount         ; Int, the amount of scans to be made on that wifi network.
@@ -464,15 +468,39 @@ def pico_network_scan(UDP_server_object, drone_socket, wifi_ssid, scan_amount = 
             avg_RSSI = sum(RSSI_list)/len(RSSI_list)
             return [avg_RSSI, RSSI_list, wifi_ssid]
 
+
 def locating_algorithm(current_rssi, previous_rssi, previous_direction, UDP_server_object, drone_socket):
-    
-    # If the RSSI is the same as the previous.
+    """
+    Description:
+
+    Chooses a new direction based on the the current RSSI scan, previous RSSI scan and the previous direction the drone flew in.
+
+    Parameters:
+
+    current_rssi        ; Float, negative 8 bit number ranging from 0 to -255.
+
+    previous_rssi       ; Float, negative 8 bit number ranging from 0 to -255.
+
+    previous_direction  ; Str, only 'right', 'left', 'forward', 'back'.
+
+    UDP_server_object   ; Var of the type socket.socket(socket.AF_INET, socket.SOCK_DGRAM).
+
+    drone_socket        ; Socket of the Ryze Tello (IP = 192.168.10.1, port = 8889), only the port number is changable.
+
+    Returns:
+
+    random_direction    ; Str, calculated using another function using the random module from micropython, 
+                          one of 'right', 'left', 'forward', 'back'.
+
+    or
+
+    Str                 ; Only one of 'right', 'left', 'forward', 'back'.
+    """
+    # If the RSSI is the same as the previous RSSI.
     if current_rssi == previous_rssi:
         return random_direction(UDP_server_object, drone_socket, None)
 
-    # Maybe needs a limit, like +5 to ensure the direction is correct enough.
-
-    # Right movement.
+    # New movement based on previous direction being right.
     elif (current_rssi > previous_rssi) and previous_direction == 'right':
         return random_direction(UDP_server_object, drone_socket, 'left')
 
@@ -480,7 +508,7 @@ def locating_algorithm(current_rssi, previous_rssi, previous_direction, UDP_serv
         send_command('left 300', 6, UDP_server_object, drone_socket)
         return 'left'
 
-    # Left movement.
+    # New movement based on previous direction being left.
     elif (current_rssi > previous_rssi) and previous_direction == 'left':
         return random_direction(UDP_server_object, drone_socket, 'right')
 
@@ -488,7 +516,7 @@ def locating_algorithm(current_rssi, previous_rssi, previous_direction, UDP_serv
         send_command('right 300', 6, UDP_server_object, drone_socket)
         return 'right'
 
-    # Forward movement.
+    # New movement based on previous direction being forward.
     elif (current_rssi > previous_rssi) and previous_direction == 'forward':
         return  random_direction(UDP_server_object, drone_socket, 'back')
 
@@ -496,7 +524,7 @@ def locating_algorithm(current_rssi, previous_rssi, previous_direction, UDP_serv
         send_command('back 300', 6, UDP_server_object, drone_socket)
         return 'back'
 
-    # Backwards movement.
+    # New movement based on previous direction being back.
     elif (current_rssi > previous_rssi) and previous_direction == 'back':
         return random_direction(UDP_server_object, drone_socket, 'forward')
 
@@ -504,48 +532,84 @@ def locating_algorithm(current_rssi, previous_rssi, previous_direction, UDP_serv
         send_command('forward 300', 6, UDP_server_object, drone_socket)
         return 'forward'
 
+
 def random_direction(UDP_server_object, drone_socket, blocked_direction):
+    """
+    Description:
+
+    A function to return a random direction as a string.
+
+    Parameters:
+
+    UDP_server_object   ; Var of the type socket.socket(socket.AF_INET, socket.SOCK_DGRAM).
+
+    drone_socket        ; Socket of the Ryze Tello (IP = 192.168.10.1, port = 8889), only the port number is changable.
+
+    blocked_direction   ; A direction the random function cannot return this call.
+
+    Returns:
+
+    direction           ; Str only one of 'right', 'left', 'forward', 'back', based on blocked_direction and the random module.
+    """
+    # Assign variable
     direction = None
 
+    # Run while loop until a valid direction is chosen randomly.
     while direction == None:
+        # Generate a random number and assign it to a variable.
         random_number = random.randint(1, 4)
 
+        # Send a command to the drone socket and return direction if the block direction is not right.
         if (random_number == 1) and (blocked_direction != 'right'):
             send_command('right 300', 6, UDP_server_object, drone_socket)
             direction = 'right'
 
+        # Send a command to the drone socket and return direction if the block direction is not left.
         elif (random_number == 2) and (blocked_direction != 'left'):
             send_command('left 300', 6, UDP_server_object, drone_socket)
             direction = 'left'
 
+        # Send a command to the drone socket and return direction if the block direction is not forward.
         elif (random_number == 3) and (blocked_direction != 'forward'):
             send_command('forward 300', 6, UDP_server_object, drone_socket)
             direction = 'forward'
 
+        # Send a command to the drone socket and return direction if the block direction is not back.
         elif (random_number == 4) and (blocked_direction != 'back'):
             send_command('back 300', 6, UDP_server_object, drone_socket)
             direction = 'back'
 
     return direction
 
-def main():
 
+def main():
+    """
+    Description:
+
+    The main function, calls all other functions internally.
+    """
     # Use the LED pin on the RaspberryPi Pico W for debugging purposes.
     LED = machine.Pin('LED', machine.Pin.OUT)
 
-    # program:
+    # Assign a variable to the wlan connection between the pico W and the drone access point.
     wlan = wlan_connect_drone_ap()
+
+    # Bind the UDP server socket and send the SDK initialization command to the drone.
     drone_communication = server_socket_bind()
 
+    # Assign a variable to each value in the tuple returned from the server_socket_bind() function.
     UDP_server_object = drone_communication[0]
     drone_socket = drone_communication[1]
 
+    # Create an access point on the pico W.
     pico_ap = pico_access_point_create(LED)
 
+    # Run the main data collection and communication function, this collects rssi and gps coordinates and sends it to the monitor.
     pico_data_control(LED, pico_ap, UDP_server_object, drone_socket)
 
-    # End connections
+    # End connections when the program is finished.
     wlan_disconnect_drone_ap(wlan)
     UDP_server_object.close()
 
+# Start the program.
 main()
