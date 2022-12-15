@@ -181,7 +181,7 @@ def server_socket_bind():
     tuple       ; Consisting of 1. UDP_server_socket as socket.socket(socket.AF_INET, socket.SOCK_DGRAM), 
                   2. tello_socket_address as (IP=192.168.10.1, port=8889), only the port is changable.
     """
-    # Assign host ip and port to the client (the drone).
+    # Assign the ip and port of tello drone to a variable.
     tello_ip = '192.168.10.1'
     tello_port = 8889
 
@@ -189,7 +189,7 @@ def server_socket_bind():
     local_host = ''
     local_port = 8889
 
-    # Initialize socket and bind it to the server's host ip and port.
+    # Create and bind the UDP server socket to the local ip and host.
     UDP_server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     UDP_server_socket.bind((local_host, local_port))
 
@@ -198,7 +198,7 @@ def server_socket_bind():
 
     while True:
         try:
-            # Initialize the Tello drone, by sending "command".
+            # Initialize the SDK instructions on the drone, by sending it a bytes string, saying 'command', using the socket_address of the tello drone.
             UDP_server_socket.sendto(b'command', tello_socket_address)
             utime.sleep(3)
             break
@@ -206,8 +206,9 @@ def server_socket_bind():
         except Exception as error:
             None
 
+    # Return the UDP_server_object and the socket address of the tello as a tuple.
     return (UDP_server_socket, tello_socket_address)
-
+    
 
 def send_command(command, time_s, server_socket, drone_socket_address):
     """
@@ -306,14 +307,18 @@ def pico_data_control(LED, access_point, UDP_server_socket, drone_socket_address
     # and pin 4 (TX, as it is transmitting) on the Neo-6m GPS module.
     GPS = machine.UART(1, baudrate=9600, tx=machine.Pin(4), rx=machine.Pin(5))
 
-    # Create the TCP server socket.
+    # Create the TCP server socket and set a timeout for then to resend data if nothing was received.
     server_socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+
+    # Set the timeout to 10 seconds, since it was observed that a lost connection without a timeout could lockup the client on the monitor 
+    # and the TCP server on the pico W, which meant communication between them would cease.
+    server_socket.settimeout(10)
     
     # Prefered host IP of the RaspberryPi Pico W and a port for the data to stream through.
     host = '192.168.4.1'
     port = 12345
 
-    # Bind the TCP server socket to the host IP and port.
+    # Bind the TCP server socket to the host IP and port (socket address).
     server_socket.bind((host, port))
 
     # Listen for a client on the host IP and the chosen port, only enable 1 connection.
@@ -330,10 +335,10 @@ def pico_data_control(LED, access_point, UDP_server_socket, drone_socket_address
     gps_read_amount = None
 
     # Activate the rest of the program, if the gps has a fix.
-    
+    """
     while fix == False:
         fix = gps_fix(GPS)
-    
+    """
     # Turn off the LED to show that the GPS got a fix.
     LED.value(0)
 
@@ -341,12 +346,26 @@ def pico_data_control(LED, access_point, UDP_server_socket, drone_socket_address
         # Turn off the LED.
         LED.value(0)
 
-        # Accept the client if it connects to the port.
-        client, address = server_socket.accept()
+        # wait for a connection to the server_socket's socket address and create a new socket able to receive and send data.
+        while True:
+            try:
+                connection_socket, address = server_socket.accept()
+                break
+            except OSError:
+                print('Accept timeout')
 
         while True:
-            # Create a variable for the receiving request message from the pico W TCP server.
-            return_data = client.recv(64)
+            
+            # Wait 10 seconds to make sure that the debugging person reached their location.
+            utime.sleep(10)
+
+            # Create a variable for the receiving request message from the pico W TCP server and try to receive it.
+            while True:
+                try:
+                    return_data = connection_socket.recv(64)
+                    break
+                except OSError:
+                    print('Return timemout')
 
             # if the request message had nothing in it break, else send the data as a reply to the client.
             if not return_data:
@@ -363,15 +382,14 @@ def pico_data_control(LED, access_point, UDP_server_socket, drone_socket_address
             # Scan the network and assign the RSSI value to a variable.
             scan = pico_network_scan(UDP_server_socket, drone_socket_address, network_ssid, int(network_scan_amount))
 
-            # Turn off the LED, to show that data is being collected.
-            LED.value(0)
-
             # The RSSI value in the tuple returned by the pico_network_scan() function.
             rssi = scan[0]
             rssi_list.append(rssi)
 
             # Collect the GPS coordinates, using the module these have already been converted from NMEA to geographic coordinates.
-            coordinates = get_coordinates(GPS, int(gps_read_amount))
+            #coordinates = get_coordinates(GPS, int(gps_read_amount))
+
+            coordinates = [0, 0]
             
             # Get the new direction the drone needs to head, based on the current and previous RSSI.
             # Only executed once, to start the algorithm.
@@ -391,7 +409,7 @@ def pico_data_control(LED, access_point, UDP_server_socket, drone_socket_address
             encoded_data = data_str.encode()
 
             # Send it to the monitor
-            client.sendall(encoded_data)
+            connection_socket.sendall(encoded_data)
             index_counter += 1
 
             # Visual indicator showing that the server client send data to the monitor.
@@ -400,14 +418,14 @@ def pico_data_control(LED, access_point, UDP_server_socket, drone_socket_address
             # Hardcoded to stop after 30 scans
             if index_counter == 30:
                 send_command('land', 5, UDP_server_socket, drone_socket_address)
-                client.sendall(b'finished')
+                connection_socket.sendall(b'finished')
 
                 # Turn off the LED and sleep a bit to make sure the final message was send,
                 # before ending the access point and closing the socket.
                 LED.value(0)
                 utime.sleep(1)
                 pico_access_point_end(access_point)
-                client.close()
+                connection_socket.close()
                 return
                     
 

@@ -173,8 +173,8 @@ while True:
             
             # Receive data from the pico W TCP server, of a total size of 128 bytes. 
             # Since the received message is send using utf-8 encoding, each normal symbol is equivalent to 1 byte.
-            received_data_packet = client_socket.recv(128)
-            decoded_data = received_data_packet.decode('utf-8')
+            received_data = client_socket.recv(128)
+            decoded_data = received_data.decode('utf-8')
             # If the message from the pico W TCP server includes the string 'finished', when the program is done and the socket should close.
             if "finished" in decoded_data:
                 client_socket.close()
@@ -191,6 +191,8 @@ while True:
                     # Sort the data list received from the PicoW, sorting by the RSSI value closest to 0.
                     data_sorted = sorted(data_list, key= lambda RSSI : RSSI[3], reverse=True)
 
+                    data_index_sorted = sorted(data_list, key= lambda index : index[0], reverse=True)
+
                     # Take the data_sorted and put the data with the smallest rssi value in another list.
                     location_guess = [[data_sorted[0][0], data_sorted[0][1], data_sorted[0][2], data_sorted[0][3]]]
 
@@ -204,7 +206,7 @@ while True:
                     data_RSSI.append(data_list[-1][-2])
 
                     # Update the normal table with these values
-                    window['-data.table-'].Update(values=data_list)
+                    window['-data.table-'].Update(values=data_index_sorted)
 
                     # If the show RSSI heatmap button has been pressed, 
                     # update the graph each time a new data point is received from the pico W TCP server.
