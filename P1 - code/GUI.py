@@ -173,8 +173,15 @@ while True:
             
             # Receive data from the pico W TCP server, of a total size of 128 bytes. 
             # Since the received message is send using utf-8 encoding, each normal symbol is equivalent to 1 byte.
-            received_data = client_socket.recv(128)
+            while True:
+                try:
+                    received_data = client_socket.recv(128)
+                    break
+                except TimeoutError as e:
+                    print(e)
+                    time.sleep(1)
             decoded_data = received_data.decode('utf-8')
+            
             # If the message from the pico W TCP server includes the string 'finished', when the program is done and the socket should close.
             if "finished" in decoded_data:
                 client_socket.close()

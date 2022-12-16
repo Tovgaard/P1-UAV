@@ -27,7 +27,7 @@ def gps_fix(gps_module):
     NMEA_array = str(gps_module.readline())
     # Split the message using ','.
     NMEA_sentence = NMEA_array.split(',')
-
+    print(NMEA_array)
     # Return True if a real geographic coordinate set have been received.
     if NMEA_sentence[0] is "b'$GPGGA":
         if (NMEA_sentence[3] is ('N' or 'S')) and (NMEA_sentence[5] is ('E' or 'W')):
@@ -140,7 +140,6 @@ def wlan_connect_drone_ap(ssid_drone='TELLO-gruppe-153', password_drone='pass=tr
     pico_wlan       ; Var as network.WLAN(network.STA_IF), the wlan connection to the drone's access point.
     """
     # Connect to the drone's access point using the wlan STA_IF (station / client) interface.
-    
     pico_wlan = network.WLAN(network.STA_IF)
     pico_wlan.active(True)
     pico_wlan.connect(ssid_drone, password_drone)
@@ -264,6 +263,8 @@ def pico_access_point_create(LED, ssid_pico="PicoW", password_pico="123456789"):
         pico_access_point.active(True)
     except Exception as e:
         return
+
+    LED.value(0)
     
     # return the network.wlan(network.AP_IF), access point.
     return pico_access_point
@@ -307,7 +308,7 @@ def pico_data_control(LED, access_point, UDP_server_socket, drone_socket_address
     # and pin 4 (TX, as it is transmitting) on the Neo-6m GPS module.
     GPS = machine.UART(1, baudrate=9600, tx=machine.Pin(4), rx=machine.Pin(5))
 
-    # Create the TCP server socket and set a timeout for then to resend data if nothing was received.
+    # Create the TCP server socket.
     server_socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
 
     # Set the timeout to 10 seconds, since it was observed that a lost connection without a timeout could lockup the client on the monitor 
@@ -335,6 +336,7 @@ def pico_data_control(LED, access_point, UDP_server_socket, drone_socket_address
     gps_read_amount = None
 
     # Activate the rest of the program, if the gps has a fix.
+    LED.value(1)
     """
     while fix == False:
         fix = gps_fix(GPS)
@@ -352,12 +354,12 @@ def pico_data_control(LED, access_point, UDP_server_socket, drone_socket_address
                 connection_socket, address = server_socket.accept()
                 break
             except OSError:
-                print('Accept timeout')
+                None
 
         while True:
-            
             # Wait 10 seconds to make sure that the debugging person reached their location.
             utime.sleep(10)
+            LED.value(0)
 
             # Create a variable for the receiving request message from the pico W TCP server and try to receive it.
             while True:
@@ -365,7 +367,7 @@ def pico_data_control(LED, access_point, UDP_server_socket, drone_socket_address
                     return_data = connection_socket.recv(64)
                     break
                 except OSError:
-                    print('Return timemout')
+                    None
 
             # if the request message had nothing in it break, else send the data as a reply to the client.
             if not return_data:
@@ -388,9 +390,7 @@ def pico_data_control(LED, access_point, UDP_server_socket, drone_socket_address
 
             # Collect the GPS coordinates, using the module these have already been converted from NMEA to geographic coordinates.
             #coordinates = get_coordinates(GPS, int(gps_read_amount))
-
             coordinates = [0, 0]
-            
             # Get the new direction the drone needs to head, based on the current and previous RSSI.
             # Only executed once, to start the algorithm.
             if index_counter == 0:
